@@ -16,3 +16,4 @@
 - променени имена на функции
 - array to []
 - added translation file separately.
+- staticHtml file
