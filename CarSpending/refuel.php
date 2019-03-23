@@ -1,4 +1,10 @@
 <?php
+// ini_set('error_reporting', E_ALL ^ E_DEPRECATED ^ E_STRICT);
+// ini_set('display_errors', 0);
+
+//  display_errors(0);
+// ini_set('display_errors', 1);
+date_default_timezone_set('Europe/Sofia');
 
 $data = array(
     array('km'=>165732, 'distance'=>487, 'liters'=>43, 'price'=>2.02, 'date'=>'2018-02-17'),
@@ -9,66 +15,128 @@ $data = array(
     array('km'=>165932, 'distance'=>687, 'liters'=>4.2, 'price'=>2.02, 'date'=>'2018-05-01'),
 );
 
-function fuelCost100km($liters_fuel, $distance)
-{
+function fuelCost100km($liters_fuel, $distance) {
 	return 100 * $liters_fuel / $distance; 
 }
 
-function fuelPrice100km($fuelCost100km, $LitrePrice)
-{
+function fuelPrice100km($fuelCost100km, $LitrePrice) {
 	return $fuelCost100km * $LitrePrice;
 }
 
-function calcCarSpanding($data) {
+function calcSummarySpendings($data) {
 
 	$totalFuelCost = 0;
 	$totalFuelLitres = 0;
-	$datesDefferenceCount = 0;
-	$loadingAVGPeriod = 0;
-	$prev = array_shift($data);
+	$refuelDaysSum= 0;
+	$avgRefuelDays = 0;
+	$refuelCount = 0;
 
+	$prev = array_shift($data);
 	foreach ($data as $value) {
 		$distance = $value['distance'] - $prev['distance'];
 		$totalFuelLitres += $value['liters'];
-
 		$liters = $value['liters'];
-		$fuelCost100km = number_format(fuelCost100km($value['liters'], $distance), 1);
-		$fuelPrice100km = number_format(fuelPrice100km($fuelCost100km, $prev['price']), 2);
-		$fuelPrice1km  = number_format($fuelPrice100km / 100, 2);
-		$totalFuelCost += $distance * $fuelPrice1km;
 
-		$dateDefferenceInSeconds = strtotime($prev['date']) - strtotime($value['date']);
-		$datesDefferenceCount += round(($dateDefferenceInSeconds / 86400) * -1);
+		$fuelCost100km = fuelCost100km($value['liters'], $distance);
+		$fuelPrice100km = fuelPrice100km($fuelCost100km, $prev['price']);
+		$fuelPrice1km  = $fuelPrice100km / 100;
+		$totalFuelCost += $distance * number_format($fuelPrice1km, 2);
 
-		// tazi matematika po formua ne mi se poluchava. Izchislil sam go po moi tap naichin, koito MISLQ che raboti
-		// $litersPer100 = 100 * $value['liters'] / $prev['distance'];
-		// print 'L100Km: ' . $litersPer100 . '<br/>';
+		$refuelDaysSum+= round((strtotime($value['date']) - strtotime($prev['date'])) / 86400);
 
 		$prev = $value;
+		$refuelCount++;
 	}
 
-		$loadingAVGPeriod = round($datesDefferenceCount / count($data));
+	$avgRefuelDays = round($refuelDaysSum/$refuelCount);
 
-		$spendingData['Разход на 100км'] = $fuelCost100km . ' литра';
-		$spendingData['Цена на 100км'] = $fuelPrice100km . ' лева';
-		$spendingData['Цена на 1км'] = $fuelPrice1km . ' лева';
-		$spendingData['Тотал разходи за гориво'] = $totalFuelCost . ' лева';
-		$spendingData['Тотал изразходвано гориво'] = $totalFuelLitres . ' литри';
-		$spendingData['Среден период на зареждане'] = $loadingAVGPeriod . ' дни';
+	$spendingData['fuelCost100km'] = $fuelCost100km;
+	$spendingData['fuelPrice100km'] = $fuelPrice100km;
+	$spendingData['fuelPrice1km'] = $fuelPrice1km;
+	$spendingData['totalFuelCost'] = $totalFuelCost;
+	$spendingData['totalFuelLitres'] = $totalFuelLitres;
+	$spendingData['avgRefuelDays'] = $avgRefuelDays;
 
-		// return $spendingData;
-		printSpendingData($spendingData);
+	return $spendingData;
 }
 
-echo calcCarSpanding($data);
+function prepareOutput($calcData, $lang='bg') {
+	
+	$lang = strtolower($lang);
+	$outputData = array();
 
-function printSpendingData($data) {
+	if ($lang === 'en') {
+		foreach ($calcData as $key => $value) {
+			if ($key == 'fuelCost100km') {
+				$outputData['Liters cost per 100km'] = number_format((float)$value, 2) . ' Liters';
+			} elseif ($key == 'fuelPrice100km') {
+				$outputData['Price per 100km'] = number_format((float)$value, 1) . ' BGN';
+			} elseif ($key == 'fuelPrice1km') {
+				$outputData['Price per 1km'] = number_format((float)$value, 1) . ' BGN';
+			} elseif ($key == 'totalFuelCost') {
+				$outputData['Total fuel cost'] = $value . ' BGN';
+			} elseif ($key == 'totalFuelLitres') {
+				$outputData['Total consumed fuel'] = $value . ' Liters';
+			} elseif ($key == 'avgRefuelDays') {
+				$outputData[$key] = $value . ' Days';
+			}
+		}		
+	} elseif ($lang === 'bg') {
+		foreach ($calcData as $key => $value) {
+			if ($key == 'fuelCost100km') {
+				$outputData['Разход на 100км'] = number_format((float)$value, 1) . ' литра';
+			} elseif ($key == 'fuelPrice100km') {
+				$outputData['Цена на 100км'] = number_format((float)$value, 2) . ' лева';
+			} elseif ($key == 'fuelPrice1km') {
+				$outputData['Цена на 1км'] = number_format((float)$value, 2) . ' лева';
+			} elseif ($key == 'totalFuelCost') {
+				$outputData['Тотал разходи за гориво'] = $value . ' лева';
+			} elseif ($key == 'totalFuelLitres') {
+				$outputData['Тотал изразходвано гориво'] = $value . ' литри';
+			} elseif ($key == 'avgRefuelDays') {
+				$outputData['Среден период на зареждане'] = $value . ' дни';
+			}
+		}
+	} else {
+		// die('Incorrect language input. Please reload the page and try again.');
+	}
 
+	return $outputData;
+}
+
+function createHtmlTable($data) {
 	$html = '<table border="1">';
 	foreach ($data as $key => $value) {
 		$html .= '<tr><td>' . $key . '</td><td>' . $value .'</td></tr>';
 	}
 	$html .= '</table>';
 
-	echo $html;
+	return $html;
 }
+
+function saveToFile($filename, $strData) {
+
+	$handle = fopen($filename, 'a+');
+	fwrite($handle, $strData . "\r");
+	fclose($handle);
+}
+
+function displayData($strData) {
+	return file_get_contents($strData);
+}
+
+$spendingData = calcSummarySpendings($data);
+$outputData = prepareOutput($spendingData, 'bg');
+$htmlOutput = createHtmlTable($outputData);
+
+saveToFile('data.php', $htmlOutput);
+
+echo displayData('data.php');
+
+
+// TODO
+
+/*
+function calcRefuelSpendings($data) {}
+
+*/
