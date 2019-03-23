@@ -1,56 +1,74 @@
 <?php
 
-	$data = array(
-        array('km'=>165732, 'distance'=>487, 'liters'=>43, 'price'=>2.02, 'date'=>'2018-02-17'),
-        array('km'=>165752, 'distance'=>507, 'liters'=>59.4, 'price'=>2.02, 'date'=>'2018-02-27'),
-        array('km'=>165882, 'distance'=>537, 'liters'=>89.1, 'price'=>2.02, 'date'=>'2018-02-29'),
-        array('km'=>165903, 'distance'=>558, 'liters'=>65, 'price'=>2.02, 'date'=>'2018-03-15'),
-        array('km'=>165946, 'distance'=>601, 'liters'=>76, 'price'=>2.02, 'date'=>'2018-03-24'),
-        array('km'=>165988, 'distance'=>643, 'liters'=>50, 'price'=>2.02, 'date'=>'2018-04-12'),
-	);
+$data = array(
+    array('km'=>165732, 'distance'=>487, 'liters'=>43, 'price'=>2.02, 'date'=>'2018-02-17'),
+    array('km'=>165752, 'distance'=>507, 'liters'=>1.4, 'price'=>2.02, 'date'=>'2018-02-22'),
+    array('km'=>165782, 'distance'=>537, 'liters'=>2.1, 'price'=>2.02, 'date'=>'2018-03-03'),
+    array('km'=>165822, 'distance'=>577, 'liters'=>2.8, 'price'=>2.02, 'date'=>'2018-03-17'),
+    array('km'=>165872, 'distance'=>627, 'liters'=>3.5, 'price'=>2.02, 'date'=>'2018-04-06'),
+    array('km'=>165932, 'distance'=>687, 'liters'=>4.2, 'price'=>2.02, 'date'=>'2018-05-01'),
+);
 
-	function fuelCostPerHundredKilometers($liters_fuel, $old_distance)
-	{
-		return 100 * $liters_fuel / $old_distance;
-	}
+function fuelCost100km($liters_fuel, $distance)
+{
+	return 100 * $liters_fuel / $distance; 
+}
 
-	function fuelPriceForHundredKilometers($fuelCostPerHundredKilometers, $LitrePrice)
-	{
-		return $fuelCostPerHundredKilometers * $LitrePrice;
-	}
+function fuelPrice100km($fuelCost100km, $LitrePrice)
+{
+	return $fuelCost100km * $LitrePrice;
+}
 
-	print '<table border="1">
-			<th>Среден разход на 100км</th>
-			<th>Цена на 1 км</th>
-			<th>Цена на 100 км</th>
-			<th>Период на зареждане</th>
-			<th>Тотал изразходвано гориво</th>
-			<th>Тотал разходи за гориво</th>';
+function calcCarSpanding($data) {
 
-	$total_liters = 0;
 	$totalFuelCost = 0;
-	for ($i=0; $i < count($data); $i++) {
-		if ($i+1 < count($data)) {
-			$distance = $data[$i+1]['distance'];
-			$liters = $data[$i+1]['liters'];
-			$total_liters += $data[$i+1]['km'] - $data[$i]['km'];
-			$totalFuelCost += ($data[$i+1]['km'] - $data[$i]['km']) * $data[$i]['price'];
+	$totalFuelLitres = 0;
+	$datesDefferenceCount = 0;
+	$loadingAVGPeriod = 0;
+	$prev = array_shift($data);
 
-			$fuelCostPerHundredKilometers = fuelCostPerHundredKilometers($liters, $data[$i]['distance']);
-			$fuelPriceForHundredKilometers = fuelPriceForHundredKilometers($fuelCostPerHundredKilometers, $data[$i+1]['liters']);
-			$pricePerKm = $fuelPriceForHundredKilometers / 100;
+	foreach ($data as $value) {
+		$distance = $value['distance'] - $prev['distance'];
+		$totalFuelLitres += $value['liters'];
 
-			$datedefferenceInSeconds = strtotime($data[$i+1]['date']) - strtotime($data[$i]['date']);
-			$loadingperiod = $datedefferenceInSeconds / 86400;
+		$liters = $value['liters'];
+		$fuelCost100km = number_format(fuelCost100km($value['liters'], $distance), 1);
+		$fuelPrice100km = number_format(fuelPrice100km($fuelCost100km, $prev['price']), 2);
+		$fuelPrice1km  = number_format($fuelPrice100km / 100, 2);
+		$totalFuelCost += $distance * $fuelPrice1km;
 
-			print '<tr>';
-			print '<td>'. $fuelCostPerHundredKilometers .'</td>';
-			print '<td>'. $pricePerKm .'</td>';
-			print '<td>'. $fuelPriceForHundredKilometers .'</td>';
-			print '<td>'. round($loadingperiod) .'</td>';
-		}
+		$dateDefferenceInSeconds = strtotime($prev['date']) - strtotime($value['date']);
+		$datesDefferenceCount += round(($dateDefferenceInSeconds / 86400) * -1);
+
+		// tazi matematika po formua ne mi se poluchava. Izchislil sam go po moi tap naichin, koito MISLQ che raboti
+		// $litersPer100 = 100 * $value['liters'] / $prev['distance'];
+		// print 'L100Km: ' . $litersPer100 . '<br/>';
+
+		$prev = $value;
 	}
-	
-	print '<td rowspan="5">'. $total_liters .' литри</td>';
-	print '<td rowspan="5">'. $totalFuelCost .'</td>';
-	print '</tr></table>';
+
+		$loadingAVGPeriod = round($datesDefferenceCount / count($data));
+
+		$spendingData['Разход на 100км'] = $fuelCost100km . ' литра';
+		$spendingData['Цена на 100км'] = $fuelPrice100km . ' лева';
+		$spendingData['Цена на 1км'] = $fuelPrice1km . ' лева';
+		$spendingData['Тотал разходи за гориво'] = $totalFuelCost . ' лева';
+		$spendingData['Тотал изразходвано гориво'] = $totalFuelLitres . ' литри';
+		$spendingData['Среден период на зареждане'] = $loadingAVGPeriod . ' дни';
+
+		// return $spendingData;
+		printSpendingData($spendingData);
+}
+
+echo calcCarSpanding($data);
+
+function printSpendingData($data) {
+
+	$html = '<table border="1">';
+	foreach ($data as $key => $value) {
+		$html .= '<tr><td>' . $key . '</td><td>' . $value .'</td></tr>';
+	}
+	$html .= '</table>';
+
+	echo $html;
+}
