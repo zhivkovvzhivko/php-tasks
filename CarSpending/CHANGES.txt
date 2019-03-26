@@ -1,6 +1,15 @@
+дата 11.03.2019
+
+- довен date параметър в translation
+- промяна в изчислението на километрите calcSpendings: 'km'=> $current['km']; и $prev = $current;
+- в calcSpendings: $fuelPricesSum += $prev['price']; вместо $current['price'];
+- подобрена getSingularOrPluralSuffix()
+- подобрена prepareSpendingsHTMLOutput()
+- изнесен логика за suffix_key в suffixForKey()
+
 дата 08.03.2019
 
-- промяна на логика в кода
+- промяна на логика в кода: Създаване на функции, които изчисляват по отделно горивото calcSpendings() и calcSummary()
 - преименовани функции
 - подобрена логика при изчисляване на calcSummary()
 - добавени функции getSuffixKey(), getSingularOrPluralSuffix(), prepareDecimals(), prepareSpendingsHTMLOutput(), prepareSummaryHTMLOutput()

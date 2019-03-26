@@ -34,6 +34,7 @@ $translations = [
 		'liters'				=> 'Заредени литри',
 		'distance'				=> 'Изминати',
 		'km'					=> 'Километраж',
+		'date'					=> 'Дата',
 		'refuelDays'			=> 'Дни от последно зареждане',
 		'fuelUsagePer100'		=> 'Разход на 100 км',
 		'fuelPricePer100'		=> 'Цена на 100 км',
@@ -59,6 +60,7 @@ $translations = [
 		'liters'				=> 'Refuel liters',
 		'distance'				=> 'Distance',
 		'km'					=> 'Board km',
+		'date'					=> 'Date',
 		'refuelDays'			=> 'Days from last refuel',
 		'fuelUsagePer100'		=> 'Fuel usage per 100 km',
 		'fuelPricePer100'		=> 'Fuel price per 100 km',
@@ -87,12 +89,13 @@ function calcSpendings($data) {
 		$spendings[$current['date']] = [
 			'liters' 			=> $prev['liters'],
 			'distance' 			=> $current['distance'],
-			'km'				=> $current['km'] - $prev['km'],
+			'km'				=> $current['km'],
 			'refuelDays'		=> calcDaysElapsed($prev['date'], $current['date']),
 			'fuelUsagePer100'	=> $fuelUsagePer100,
 			'fuelPricePer100'	=> calcPrice($fuelUsagePer100, $prev['price']),
 			'totalPrice'		=> calcPrice($prev['liters'], $prev['price']),
 		];
+		$prev = $current;
 	}
 	return $spendings;
 }
@@ -112,7 +115,7 @@ function calcSummary($data) {
 		$sumOfDistances 	+= $current['distance'];
 		$fuelUsagePer100 	+= calcFuelUsagePer100($prev['liters'], $current['distance']);
 		$fuelPricesPer100 	+= calcPrice($fuelUsagePer100, $prev['price']);
-		$fuelPricesSum 		+= $current['price'];
+		$fuelPricesSum 		+= $prev['price'];
 		$totalFuelUsage 	+= $prev['liters']; 
 		$totalExpenses 		+= calcPrice($current['liters'], $current['price']);
 		$refuelDaysSum 		+= calcDaysElapsed($prev['date'], $current['date']);
@@ -150,7 +153,7 @@ function getSuffixKey($key) {
 
 
 function getSingularOrPluralSuffix($val, $suffix) {
-	if (abs($val) <= 1) {
+	if ($val == 0 || abs($val) == 1) {
 		$s = $suffix . '_' . abs($val);
 	} else {
 		$s = $suffix . '_*';
@@ -168,12 +171,16 @@ function prepareDecimals($data, $lang) {
 		$decimals['avgFuelUsagePer100'] = 1;
 		$decimals['fuelUsagePer100'] = 1;
 	}
+	$decimals['refuelDays'] = 0;
+	$decimals['avgRefuelDays'] = 0;
+
+	return $decimals;
 }
 
 function prepareSpendingsHTMLOutput($spendingsData, $translation) {
 	$output = "<table border=\"1\">\n"
-			. "<th>\n"
-			. "\t<td>{$translation['date']}</td>\n";
+			. "<tr>\n"
+			. "\t<th>{$translation['date']}</th>\n";
 
 	$firstSpendings = current($spendingsData);
 	$decimals = prepareDecimals($firstSpendings, $translation);
@@ -181,18 +188,21 @@ function prepareSpendingsHTMLOutput($spendingsData, $translation) {
 		$label = isset($translation[$key])
 					? $translation[$key]
 					: '';
-		$output .= "\t<td>{label}</td>\n";
+		$output .= "\t<th>{$label}</th>\n";
 	}
-	$output .= "</th>\n";
+	$output .= "</tr>\n";
+
 	foreach($spendingsData as $date => $spendings) {
 		$output .= "<tr>\n";
 		
 		$dateStr = date('Y-m-d', strtotime($date));
 		$output .= "\t<td>{$dateStr}</td>\n";
-		
+
 		foreach($spendings as $key => $val) {
-			$value = number_format($val, 2);
-			$output .= "\t<td>{$value}</td>\n";
+			$fmt_val= number_format($val, $decimals[$key], '.', '');
+			$suffix = suffixForKey($key, $val, $translation);
+			$value 	= $fmt_val . ' ' . $suffix;
+			$output .= "\t<td align=\"right\">{$value}</td>\n";
 		}
 		$output .= "</tr>\n";
 	}
@@ -200,32 +210,36 @@ function prepareSpendingsHTMLOutput($spendingsData, $translation) {
 	return $output;	
 }
 
+function suffixForKey($key, $val, $translation) {
+	$suffix_key = getSuffixKey($key);
+	$suffix = '';
+	if (isset($translation[$suffix_key])) {
+		$suffix = $translation[$suffix_key];
+	} else {
+		$sk = getSingularOrPluralSuffix($val, $suffix_key);
+		if (isset($translation[$sk])) {
+			$suffix = $translation[$sk];
+		}
+	}
+	return $suffix;
+}
+
 function prepareSummaryHTMLOutput($summaryData, $translation) {
 	$decimals = prepareDecimals($summaryData, $translation);
 	
 	$output = "<table border=\"1\">\n";
 	foreach($summaryData as $key => $val) {
-		$suffix_key = getSuffixKey($key);
-		$suffix = '';
-		if (isset($translation[$suffix_key])) {
-			$suffix = $translation[$suffix_key];
-		} else {
-			$sk = getSingularOrPluralSuffix($val, $suffix_key);
-			if (isset($translation[$sk])) {
-				$suffix = $translation[$sk];
-			}
-		}				
-
 		$label 		= isset($translation[$key]) 
 						? $translation[$key] 
 						: '';
 
-		$fmt_val 	= number_format($val, $decimals[$key]);
+		$fmt_val 	= number_format($val, $decimals[$key], '.', '');
+		$suffix 	= suffixForKey($key, $val, $translation);
 		$value 		= $fmt_val . ' ' . $suffix;
 
 		$output .= "<tr>\n"
 				.  "\t<td>{$label}</td>\n"
-				.  "\t<td>{$value}</td>\n"
+				.  "\t<td align=\"right\">{$value}</td>\n"
 				. "</tr>\n";
 	}
 	$output .= "</table>\n";
@@ -244,7 +258,7 @@ function prepareHTMLOutput($spendingsData, $summaryData, $translation) {
 	$label = isset($translation['summary'])
 				? $translation['summary']
 				: '';
-	$output = "<h3>{$label}</h3>\n";
+	$output .= "<h3>{$label}</h3>\n";
 	$output .= prepareSummaryHTMLOutput($summaryData, $translation);
 	
 	return $output;
@@ -258,7 +272,8 @@ function displayData($strData) {
 	echo $strData;
 }
 
-$calcData = calcSummary($data);
+$spendingsData = calcSpendings($data);
+$summaryData = calcSummary($data);
 $outputData = [];
 foreach(['bg', 'en'] as $lang) {
 	$outputData[$lang] = prepareHTMLOutput($spendingsData, $summaryData, $translations[$lang]);
