@@ -1,7 +1,5 @@
 <?php
 
-include 'translations.php';
-
 date_default_timezone_set('Europe/Sofia');
 
 $data = [
@@ -13,192 +11,258 @@ $data = [
     ['km'=>165932, 'distance'=>687, 'liters'=>4.2, 'price'=>2.02, 'date'=>'2018-05-01'],
 ];
 
-function spentLitersPer100km($liters_fuel, $distance) {
-	return 100 * $liters_fuel / $distance; 
+$translations = [
+	"bg" => [
+		'spendings'				=> 'Разходи за гориво',
+		'summary'				=> 'Обобщени',
+		'avgDistancePerRefuel' 	=> 'Средно изминато разстояние с едно зареждане',
+		'avgFuelUsagePer100'	=> 'Среден разход на 100 км',
+		'avgFuelPricePer100'	=> 'Средна цена на 100 км',
+		'avgRefuelLiters'		=> 'Средно количество при зареждане',
+		'avgFuelPrice'			=> 'Средна цена на гориво',
+		'totalFuelUsage'		=> 'Всичко потребено гориво',
+		'totalExpenses'			=> 'Всичко разходи',
+		'avgRefuelDays'			=> 'Среден период на зареждане',
+		'unit_distance'			=> 'км.', 
+		'unit_liter'			=> 'л.',
+		'unit_currency_0'		=> 'лева', 
+		'unit_currency_1' 		=> 'лев',
+		'unit_currency_*' 		=> 'лева',
+		'unit_day_0'			=> 'дни', 
+		'unit_day_1'			=> 'ден',
+		'unit_day_*' 			=> 'дни',
+		'liters'				=> 'Заредени литри',
+		'distance'				=> 'Изминати',
+		'km'					=> 'Километраж',
+		'refuelDays'			=> 'Дни от последно зареждане',
+		'fuelUsagePer100'		=> 'Разход на 100 км',
+		'fuelPricePer100'		=> 'Цена на 100 км',
+		'totalPrice'			=> 'Всичко цена'
+	],
+	"en" => [
+		'spendings'				=> 'Fuel spendings',
+		'summary'				=> 'Summary',
+		'avgDistancePerRefuel'	=> 'Average distance per refuel',
+		'avgFuelUsagePer100'	=> 'Average usage per 100 km',
+		'avgFuelPricePer100'	=> 'Average price per 100 km',
+		'avgRefuelLiters'		=> 'Total used liters',
+		'avgFuelPrice'			=> 'Average fuel price',
+		'totalFuelUsage'		=> 'Total fuel usage',
+		'totalExpenses'			=> 'Total expenses',
+		'avgRefuelDays'			=> 'Average refuel period',
+		'unit_distance'			=> 'km', 
+		'unit_liter'			=> 'l',
+		'unit_currency'			=> 'BGN',
+		'unit_day_0'			=> 'days', 
+		'unit_day_1'			=> 'day',
+		'unit_day_*' 			=> 'days',
+		'liters'				=> 'Refuel liters',
+		'distance'				=> 'Distance',
+		'km'					=> 'Board km',
+		'refuelDays'			=> 'Days from last refuel',
+		'fuelUsagePer100'		=> 'Fuel usage per 100 km',
+		'fuelPricePer100'		=> 'Fuel price per 100 km',
+		'totalPrice'			=> 'Total price'
+	],
+];
+
+function calcFuelUsage($usedLiters, $distance) {
+	return $usedLiters / $distance; 
 }
-
-function spentMoneyPer100km($spentLitersPer100km, $LitrePrice) {
-	return $spentLitersPer100km * $LitrePrice;
+function calcFuelUsagePer100($usedLiters, $distance) {
+	return 100 * calcFuelUsage($usedLiters, $distance);
 }
-
-function spentMoneyPer1km($spentMoneyPer100km) {
- return $spentMoneyPer100km / 100;
+function calcPrice($liters, $singlePrice) {
+	return $liters * $singlePrice;
 }
-
-function calcTotalFuelPrice($distance, $fuelPrice1km) {
-	return $distance * $fuelPrice1km;
+function calcDaysElapsed($fromDate, $toDate) {
+	return round((strtotime($toDate) - strtotime($fromDate)) / 86400);
 }
-
-function calcRefuelDaysSum($currentDate, $prevDate) {
-	return round((strtotime($currentDate) - strtotime($prevDate)) / 86400);
-}
-
-function calcAvgRefuelDays($refuelDaysSum, $refuelCount) {
-	return $avgRefuelDays = round($refuelDaysSum/$refuelCount);
-}
-
-function calcSummarySpendings($data) {
-
-	$totalFuelPrice = 0;
-	$totalFuelLitres = 0;
-	$refuelDaysSum= 0;
-	$avgRefuelDays = 0;
-	$refuelCount = 0;
-	$spendingData['allRefuelStatuses'] = [];
-
+function calcSpendings($data) {
+	$spendings = [];
 	$prev = array_shift($data);
-	foreach ($data as $value) {
-		$distance = $value['distance'] - $prev['distance'];
-		$totalFuelLitres += $value['liters'];
-		$liters = $value['liters'];
-
-		$spentLitersPer100km = spentLitersPer100km($value['liters'], $distance);
-		$spentMoneyPer100km = spentMoneyPer100km($spentLitersPer100km, $prev['price']);
-		$fuelPrice1km  = spentMoneyPer1km($spentMoneyPer100km);
-		$totalFuelPrice += calcTotalFuelPrice($distance, $fuelPrice1km);
-
-		$refuelDaysSum += calcRefuelDaysSum($value['date'], $prev['date']);
-
-		$refuelStatus = [
-			'spentLitersPer100km' => $spentLitersPer100km,
-			'spentMoneyPer100km' => $spentMoneyPer100km,
-			'fuelPrice1km' => $fuelPrice1km,
-			'distance' => $distance,
-			'totalFuelPrice' => calcTotalFuelPrice($distance, $fuelPrice1km),
-			'refuelDaysSum' => $refuelDaysSum,
-		];
-
-		array_push($spendingData['allRefuelStatuses'],  $refuelStatus);
+	foreach ($data as $current) {
+		$fuelUsagePer100 = calcFuelUsagePer100($prev['liters'], $current['distance']);
 		
-		$prev = $value;
-		$refuelCount++;
+		$spendings[$current['date']] = [
+			'liters' 			=> $prev['liters'],
+			'distance' 			=> $current['distance'],
+			'km'				=> $current['km'] - $prev['km'],
+			'refuelDays'		=> calcDaysElapsed($prev['date'], $current['date']),
+			'fuelUsagePer100'	=> $fuelUsagePer100,
+			'fuelPricePer100'	=> calcPrice($fuelUsagePer100, $prev['price']),
+			'totalPrice'		=> calcPrice($prev['liters'], $prev['price']),
+		];
 	}
-	
-	$avgRefuelDays = calcAvgRefuelDays($refuelDaysSum, $refuelCount);
-
-	$spendingData['spentLitersPer100km'] = $spentLitersPer100km;
-	$spendingData['spentMoneyPer100km'] = $spentMoneyPer100km;
-	$spendingData['fuelPrice1km'] = $fuelPrice1km;
-	$spendingData['totalFuelPrice'] = $totalFuelPrice;
-	$spendingData['totalFuelLitres'] = $totalFuelLitres;
-	$spendingData['avgRefuelDays'] = $avgRefuelDays;
-
-	return $spendingData;
+	return $spendings;
 }
 
-function prepareOutput($calcData, $translation, $suffix, $lang='bg') {
-	
-	$lang = strtolower($lang);
-	$outputData = array();
+function calcSummary($data) {
+	$prev = array_shift($data);
 
-	if ($lang == 'en') {
+	$sumOfDistances = 0;
+	$fuelUsagePer100 = 0;
+	$fuelPricesPer100 = 0;
+	$fuelPricesSum = 0;
+	$totalFuelUsage = 0;
+	$refuelDaysSum = 0;
+	$totalExpenses = calcPrice($prev['liters'], $prev['price']);
 
-		$refuelSpendingshtml = '';
-		$html .= '<h3>Total Refuel Spendings</h3>
-					<table border="1">';
-		foreach ($calcData as $key => $value) {
-
-			if (is_array($value)) {
-
-				$refuelSpendingshtml = '
-				<h3>Refuel Spendings</h3>
-					<table border="1">
-						<th>Spent Liters Per 100km</th>
-						<th>Spent Money Per 100km</th>
-						<th>Fuel Price 1 km</th>
-						<th>Distance</th>
-						<th>Fuel Price</th>
-						<th>Refuel Days Count</th>';
-
-				foreach ($value as $arr) {
-					$refuelSpendingshtml .= 
-					'<tr><td>'. number_format((float)$arr['spentLitersPer100km'], 2) .' Liters</td>'
-					.'<td>'. number_format((float)$arr['spentMoneyPer100km'], 1) .' BGN</td>'
-					.'<td>'. number_format((float)$arr['fuelPrice1km'], 1) .' BGN</td>'
-					.'<td>'. $arr['distance'] .' km</td>'
-					.'<td>'. number_format((float)$arr['totalFuelPrice'], 2) .' BGN</td>'
-					.'<td>'. $arr['refuelDaysSum'] .'</td></tr>';
-				}
-
-				$refuelSpendingshtml .= '</table>';
-
-			} else {
-				if ($key == 'spentLitersPer100km') {
-					$html .= '<tr><td>Spent Liters per 100km</td><td>'. number_format((float)$value, 2) .' Liters</td></tr>';
-				} elseif ($key == 'spentMoneyPer100km') {
-					$html .= '<tr><td>Spent Money per 100km</td><td>'. number_format((float)$value, 1) .' BGN</td></tr>';
-				} elseif ($key == 'fuelPrice1km') {
-					$html .= '<tr><td>Price per 1km</td><td>'. number_format((float)$value, 1) .' BGN</td></tr>';
-				} elseif ($key == 'totalFuelPrice') {
-					$html .= '<tr><td>Total fuel price</td><td>'. number_format($value, 2) .' BGN</td></tr>';
-				} elseif ($key == 'totalFuelLitres') {
-					$html .= '<tr><td>Total consumed fuel</td><td>' . $value .' Liters</td></tr>';
-				} elseif ($key == 'avgRefuelDays') {
-					$html .= '<tr><td>AVG Refuel Days</td><td>'. $value .' Days</td></tr>';
-				}
-			}
-		}		
-		
-		$html .= '</table>';
-		$html .= $refuelSpendingshtml;
-
-	} elseif ($lang == 'bg') {
-
-		$refuelSpendingshtml = '';
-		$html .= '<table border="1">
-				 	<h3>Тотал разходи за гориво</h3>';
-		foreach ($calcData as $key => $val) {
-
-			if (is_array($val)) {
-				$refuelSpendingshtml = '
-				<h3>Зареждане с гориво</h3>
-				<table border="1">
-					<th>Разход на 100км</th>
-					<th>Цена на 100км</th>
-					<th>Цена на 1км</th>
-					<th>Разстояние</th>
-					<th>Разходи за гориво</th>
-					<th>Период на зареждане</th>';
-
-				foreach ($val as $arr) {
-					$refuelSpendingshtml .= 
-					'<tr><td>'. number_format((float)$arr['spentLitersPer100km'], 1) .' литри</td>'
-					.'<td>'. number_format((float)$arr['spentMoneyPer100km'], 2) .' лв</td>'
-					.'<td>'. number_format((float)$arr['fuelPrice1km'], 2) .' лв</td>'
-					.'<td>'. $arr['distance'] .' км</td>'
-					.'<td>'. number_format((float)$arr['totalFuelPrice'], 1) .' лв</td>'
-					.'<td>'. $arr['refuelDaysSum'] .' дни</td></tr>';
-				}
-
-				$refuelSpendingshtml .= '</table>';
-			} else {
-				$html .= "<tr><td>{$translation[$key]}</td><td>{$val}$suffix[$key]</td></tr>";
-			}
-		}
-
-		$html .= '</table>';
-		$html .= $refuelSpendingshtml;
-	} else {
-		// die('Incorrect language input. Please reload the page and try again.');
+	foreach ($data as $current) {
+		$sumOfDistances 	+= $current['distance'];
+		$fuelUsagePer100 	+= calcFuelUsagePer100($prev['liters'], $current['distance']);
+		$fuelPricesPer100 	+= calcPrice($fuelUsagePer100, $prev['price']);
+		$fuelPricesSum 		+= $current['price'];
+		$totalFuelUsage 	+= $prev['liters']; 
+		$totalExpenses 		+= calcPrice($current['liters'], $current['price']);
+		$refuelDaysSum 		+= calcDaysElapsed($prev['date'], $current['date']);
+		$prev = $current;
 	}
+	return [
+		'avgDistancePerRefuel'	=> $sumOfDistances / count($data),
+		'avgFuelUsagePer100'	=> $fuelUsagePer100 / count($data),
+		'avgFuelPricePer100'	=> $fuelPricesPer100 / count($data),
+		'avgRefuelLiters'		=> $totalFuelUsage / count($data),
+		'avgFuelPrice'			=> $fuelPricesSum / count($data),
+		'totalFuelUsage'		=> $totalFuelUsage,
+		'totalExpenses'			=> $totalExpenses,
+		'avgRefuelDays'			=> $refuelDaysSum / count($data)
+	];
+}
 
-	return $html;
+
+function getSuffixKey($key) {
+	$suffix_key = '';
+	if (in_array($key, ['avgFuelUsagePer100', 'avgRefuelLiters', 'totalFuelUsage', 'liters', 'fuelUsagePer100'])) {
+		$suffix_key = 'unit_liter';
+	}
+	if (in_array($key, ['avgFuelPricePer100', 'avgFuelPrice', 'totalExpenses', 'totalPrice', 'fuelPricePer100'])) {
+		$suffix_key = 'unit_currency';
+	}
+	if (in_array($key, ['avgRefuelDays', 'refuelDays'])) {
+		$suffix_key = 'unit_day';
+	}
+	if (in_array($key, ['avgDistancePerRefuel', 'distance', 'km'])) {
+		$suffix_key = 'unit_distance';
+	}
+	return $suffix_key;
+}
+
+
+function getSingularOrPluralSuffix($val, $suffix) {
+	if (abs($val) <= 1) {
+		$s = $suffix . '_' . abs($val);
+	} else {
+		$s = $suffix . '_*';
+	}
+	return $s;
+}
+
+function prepareDecimals($data, $lang) {
+	if ($lang == 'en') {
+		$decimals = array_combine(array_keys($data), array_fill(0, count($data), 1));
+		$decimals['avgFuelUsagePer100'] = 2;
+		$decimals['fuelUsagePer100'] = 2;
+	} else {
+		$decimals = array_combine(array_keys($data), array_fill(0, count($data), 2));
+		$decimals['avgFuelUsagePer100'] = 1;
+		$decimals['fuelUsagePer100'] = 1;
+	}
+}
+
+function prepareSpendingsHTMLOutput($spendingsData, $translation) {
+	$output = "<table border=\"1\">\n"
+			. "<th>\n"
+			. "\t<td>{$translation['date']}</td>\n";
+
+	$firstSpendings = current($spendingsData);
+	$decimals = prepareDecimals($firstSpendings, $translation);
+	foreach($firstSpendings as $key => $val) {
+		$label = isset($translation[$key])
+					? $translation[$key]
+					: '';
+		$output .= "\t<td>{label}</td>\n";
+	}
+	$output .= "</th>\n";
+	foreach($spendingsData as $date => $spendings) {
+		$output .= "<tr>\n";
+		
+		$dateStr = date('Y-m-d', strtotime($date));
+		$output .= "\t<td>{$dateStr}</td>\n";
+		
+		foreach($spendings as $key => $val) {
+			$value = number_format($val, 2);
+			$output .= "\t<td>{$value}</td>\n";
+		}
+		$output .= "</tr>\n";
+	}
+	$output .= "</table>\n";
+	return $output;	
+}
+
+function prepareSummaryHTMLOutput($summaryData, $translation) {
+	$decimals = prepareDecimals($summaryData, $translation);
+	
+	$output = "<table border=\"1\">\n";
+	foreach($summaryData as $key => $val) {
+		$suffix_key = getSuffixKey($key);
+		$suffix = '';
+		if (isset($translation[$suffix_key])) {
+			$suffix = $translation[$suffix_key];
+		} else {
+			$sk = getSingularOrPluralSuffix($val, $suffix_key);
+			if (isset($translation[$sk])) {
+				$suffix = $translation[$sk];
+			}
+		}				
+
+		$label 		= isset($translation[$key]) 
+						? $translation[$key] 
+						: '';
+
+		$fmt_val 	= number_format($val, $decimals[$key]);
+		$value 		= $fmt_val . ' ' . $suffix;
+
+		$output .= "<tr>\n"
+				.  "\t<td>{$label}</td>\n"
+				.  "\t<td>{$value}</td>\n"
+				. "</tr>\n";
+	}
+	$output .= "</table>\n";
+	return $output;
+}
+
+function prepareHTMLOutput($spendingsData, $summaryData, $translation) {
+	$label = isset($translation['spendings'])
+				? $translation['spendings']
+				: '';
+	$output = "<h3>{$label}</h3>\n";
+	$output .= prepareSpendingsHTMLOutput($spendingsData, $translation);
+	
+	$output .= "<br/><br/>\n";
+	
+	$label = isset($translation['summary'])
+				? $translation['summary']
+				: '';
+	$output = "<h3>{$label}</h3>\n";
+	$output .= prepareSummaryHTMLOutput($summaryData, $translation);
+	
+	return $output;
 }
 
 function saveToFile($filename, $strData) {
-	$handle = fopen($filename, 'a+');
-	fwrite($handle, $strData . "\r");
-	fclose($handle);
+	file_put_contents($filename, $strData);
 }
 
 function displayData($strData) {
-	return file_get_contents($strData);
+	echo $strData;
 }
 
-$spendingData = calcSummarySpendings($data);
-
-$outputData = prepareOutput($spendingData, $translation, $suffix, 'en');
-
-saveToFile('staticHtml.php', $outputData);
-
-echo displayData('staticHtml.php');
+$calcData = calcSummary($data);
+$outputData = [];
+foreach(['bg', 'en'] as $lang) {
+	$outputData[$lang] = prepareHTMLOutput($spendingsData, $summaryData, $translations[$lang]);
+}
+saveToFile('en.html', $outputData['en']);
+displayData($outputData['bg']);
+displayData($outputData['en']);
