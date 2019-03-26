@@ -6,6 +6,7 @@
 - подобрена getSingularOrPluralSuffix()
 - подобрена prepareSpendingsHTMLOutput()
 - изнесен логика за suffix_key в suffixForKey()
+- добавен краен резултат е en.html
 
 дата 08.03.2019
 
