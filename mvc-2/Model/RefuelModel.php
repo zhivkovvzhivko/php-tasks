@@ -6,7 +6,7 @@ class RefuelModel {
 
 	private $translations;
 
-	public function __construct($translations){
+	public function __construct($translations='en'){
 		$this->translations = $translations;
 	}
 
@@ -169,11 +169,12 @@ class RefuelModel {
 
 		return $decimals;
 	}
-
-	$refuelData = $this->readCsv('refuelData.csv');
-	print '<pre/>'; print_r($refuelData); exit(' 166');
-	$spendingsData = $this->calcSpendings($refuelData);
-	$summaryData = $this->calcSummary($refuelData);
+	
+	// $testArr[1,2,3,4,5,6];
+	// $refuelData = $this->readCsv($testArr);
+	// print '<pre/>'; print_r($refuelData); exit(' 166');
+	// $spendingsData = $this->calcSpendings($refuelData);
+	// $summaryData = $this->calcSummary($refuelData);
 	
 	public function prepareSpendingsHTMLOutput($spendingsData, $translation) {
 		$output = "<table border=\"1\">\n"
@@ -248,12 +249,17 @@ class RefuelModel {
 		return $output;
 	}
 
+	public function getOutputData(array $data=null) {
+// print '<pre/>'; print_r($refuelData); exit(' 258');
+	
+		$refuelData = $this->readCsv('refuelData.csv');
+		$spendingsData = $this->calcSpendings($refuelData);
+		$summaryData = $this->calcSummary($refuelData);
 
-	public function getOutputData(array $data){
 		$outputData = [];
 		foreach(['bg', 'en'] as $lang) {
-			$outputData[$lang] = $display->prepareHTMLOutput($spendingsData, $summaryData, $this->translations->translations[$lang]);
+			$outputData[$lang] = $this->prepareHTMLOutput($spendingsData, $summaryData, $this->translations->translations[$lang]);
 		}
-		return $output;
+		return $outputData;
 	}
 }

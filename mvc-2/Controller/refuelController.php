@@ -3,6 +3,7 @@
 namespace Controller;
 
 use Model\RefuelModel;
+use View\RefuelView;
 use Translations\Translations;
 
 class RefuelController
@@ -12,13 +13,19 @@ class RefuelController
 
 	public function __controller($view) {
 		$this->view = $view;
-		// print '<pre/>'; print_r($this->view); exit('in controller');
 	}
 	
 	public function refuelData(){
 		$translations = new Translations();
 		$refuelModel = new RefuelModel($translations);
-		$data = $refuelModel->getOutputData;
+		
+
+		// $refuelData = $refuelModel->readCsv($testArr);
+		// print '<pre/>'; print_r($refuelData); exit(' 166');
+		// $spendingsData = $this->calcSpendings($refuelData);
+		// $summaryData = $this->calcSummary($refuelData);
+
+		$data = $refuelModel->getOutputData();
 
 		$this->view->displayData($data);
 	}
