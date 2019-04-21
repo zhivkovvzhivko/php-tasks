@@ -10,9 +10,7 @@ use View\RefuelView;
 use Model\RefuelModel;
 
 $view = new RefuelView();
-// print '<pre/>'; print_r($view); exit('in index');
 
 $refuelController = new RefuelController($view);	
 print $refuelController->refuelData();
-print $refuelController->test();
-// print '<pre/>'; print_r($refuelController); die('in index');
+

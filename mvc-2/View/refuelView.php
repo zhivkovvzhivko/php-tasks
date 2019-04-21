@@ -6,7 +6,10 @@ class RefuelView implements ViewInterface
 {
 
 	public function displayData($strData) {
-		echo $strData;
+
+		foreach ($strData as $strData) {
+			echo $strData;
+		}
 	}
 
 	public function render() {

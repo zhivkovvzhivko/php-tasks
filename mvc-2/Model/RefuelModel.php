@@ -170,12 +170,6 @@ class RefuelModel {
 		return $decimals;
 	}
 	
-	// $testArr[1,2,3,4,5,6];
-	// $refuelData = $this->readCsv($testArr);
-	// print '<pre/>'; print_r($refuelData); exit(' 166');
-	// $spendingsData = $this->calcSpendings($refuelData);
-	// $summaryData = $this->calcSummary($refuelData);
-	
 	public function prepareSpendingsHTMLOutput($spendingsData, $translation) {
 		$output = "<table border=\"1\">\n"
 				. "<tr>\n"
@@ -250,8 +244,6 @@ class RefuelModel {
 	}
 
 	public function getOutputData(array $data=null) {
-// print '<pre/>'; print_r($refuelData); exit(' 258');
-	
 		$refuelData = $this->readCsv('refuelData.csv');
 		$spendingsData = $this->calcSpendings($refuelData);
 		$summaryData = $this->calcSummary($refuelData);

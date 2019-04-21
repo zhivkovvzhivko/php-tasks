@@ -11,28 +11,22 @@ class RefuelController
 
 	private $view;
 
-	public function __controller($view) {
+	public function __construct($view) {
 		$this->view = $view;
 	}
 	
 	public function refuelData(){
 		$translations = new Translations();
 		$refuelModel = new RefuelModel($translations);
-		
-
-		// $refuelData = $refuelModel->readCsv($testArr);
-		// print '<pre/>'; print_r($refuelData); exit(' 166');
-		// $spendingsData = $this->calcSpendings($refuelData);
-		// $summaryData = $this->calcSummary($refuelData);
 
 		$data = $refuelModel->getOutputData();
-
+		
 		$this->view->displayData($data);
 	}
 
 	public function test() {
 
 		$model = new RefuelModel();
-		print '<pre/>'; print_r($model); die('in controller');
+		print '<pre/>'; print_r($model->getOutputData()); die('in TESTcontroller');
 	}
 }
