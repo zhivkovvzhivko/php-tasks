@@ -1,0 +1,3 @@
+дата: 12.06.19
+- добавени функции check_player_announcement, prepareOutput, displayOutput
+- малки подобрения на кода
