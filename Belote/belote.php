@@ -72,39 +72,76 @@ function give_cards_to_players($players, $belote_cards) {
 			$players[$player][] = array_shift($belote_cards);
 		}
 	}
+
+// echo '<pre>'; print_r($players); die(' 75 ');
+	return check_player_announcement($players);
+}
+
+
+function check_player_announcement($player_cards) {
+	$checked_cards = [];
+
 	// sort players cards
-	foreach ($players as $player => $playerCards) {
-		$player_cards = $players[$player];
-		sort($player_cards);
+	foreach ($player_cards as $player => $playerCards) {
+		$cards = $player_cards[$player];
+		sort($cards);
 
 		$ordinal = 0;
-		$prev = array_shift($player_cards);
-		foreach ($player_cards as $card_index) { // checks players announcement
+		$prev = array_shift($cards);
+		foreach ($cards as $card_index) { // checks players announcement
 
 			if ($card_index == $prev+1) {
 				$ordinal++;
 			} else {
 				$ordinal = 0;
 			}		
-
-			if ($ordinal == 3) {
-				$announcement = 'Tierce';
-			} elseif ($ordinal = 4) {
-				$announcement = 'Fifty';
-			} elseif ($ordinal = 5) {
-				$announcement = 'Hundred';
-			} elseif (false) {
-				// check for belot Q and K
-				$announcement = 'Belote';
-			}
-			echo 'ordinal: '. $ordinal .' anons: ' . $announcement ?? 'nqma';
-			echo '<br/><br/>';
 		}
-
-		exit(' elements');
-		// check if there is announcement
+		// checks announcment
+		if ($ordinal == 3) {
+			$announcement = 'Tierce';
+		} elseif ($ordinal = 4) {
+			$announcement = 'Fifty';
+		} elseif ($ordinal = 5) {
+			$announcement = 'Hundred';
+		} elseif (false) {
+			// check for belot Q and K
+			$announcement = 'Belote';
+		}
+		$checked_cards[$player]['cards'] = $cards;
+		$checked_cards[$player]['announcement'] = $announcement ?? '';
 	}
-	return $players;
+	return $checked_cards;
+}
+
+function prepareOutput($player_cards){
+	$output = "<table border=\"1\">";
+	$output .= "<tr><th>Player name</th><th>Player cards</th><th>Player announcement</th></tr>\n";
+
+	foreach ($player_cards as $player => $cards) {
+		$output .= "<tr><td>$player</td><td>";
+
+		foreach ($cards as $v) {
+			if (is_array($v)) {
+				foreach ($v as $card) {
+					$output .= $card . ', ';
+				}
+			} else {
+				$output .= "</td><td>$v</td>";
+				$output .= "<tr>\n";
+			}
+		}
+	}
+	
+	$output .= '</table>';
+	return $output;
+}
+
+function displayOutput($data) {
+	echo $data;
+}
+
+function throw_cards($player_cards, $start_from_player=2) {
+	echo '<pre>'; print_r($player_cards); die(' in throw');
 }
 
 $deck = range(2, 53);
@@ -120,11 +157,11 @@ $players = [
 
 $belote_cards = get_valid_belote_cards($deck);
 $player_cards = give_cards_to_players($players, $belote_cards);
+$data = prepareOutput($player_cards);
+displayOutput($data);
 
-echo '<br/><br/>';
-echo '<pre/>'; print_r($player_cards); echo '<br/><br/>';
-
-echo 'get_card_value_by_index: ' . get_card_value_by_index() . '<br/>';
-echo 'get_card_index: ' . get_card_index() . '<br/>';
-echo 'get_card_color_by_index: ' . get_card_color_by_index() . '<br/>';
-echo 'get_card_text: ' . get_card_text() . '<br/>';
+// echo '<pre/>'; print_r($player_cards); echo '<br/><br/>'; //die(' tuk ');
+// echo 'get_card_value_by_index: ' . get_card_value_by_index() . '<br/>';
+// echo 'get_card_index: ' . get_card_index() . '<br/>';
+// echo 'get_card_color_by_index: ' . get_card_color_by_index() . '<br/>';
+// echo 'get_card_text: ' . get_card_text() . '<br/>';
