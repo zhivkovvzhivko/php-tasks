@@ -3,6 +3,6 @@
 - малки подобрения на кода
 
 дата: 28.06
-- добавена втора версия за белот
-- добавение prepareOutput и displayOutput
-- преместена проверка за анонси в prepareOutput
+- добавение prepareOutput и displayOutput в belote.php
+- преместена проверка за анонси в prepareOutput belote.php
+- добавена втора версия за белот в belote_2.php - подобрена като функционалсност и логика
