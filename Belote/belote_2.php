@@ -1,57 +1,57 @@
 <?php
 
-function get_card_index($card_index=34) { // -> idx=34, return 6
-	return ($card_index-2) % 13;
+function get_deck_card_index($deck_card_index=34) { // -> idx=34, return 6
+	return ($deck_card_index-2) % 13;
 }
-function get_card_color_index($card_index = 34) { // -> card_index=34, color_index=2
-	return intval(($card_index - 2) / 13);
+function get_deck_card_color_index($deck_card_index=34) { // -> card_index=34, color_index=2
+	return intval(($deck_card_index - 2) / 13);
 }
 // return valid belote cards 7 .. A
-function get_card_value_by_index($card_index=34) { // -> card_index=34, color_index=2, return 8♦
+function get_deck_card_value_by_index($deck_card_index=34) { // -> card_index=34, color_index=2, return 8♦
 	$card_map = [9=>'J', 10=>'Q', 11=>'K', 12=>'A'];
 
-	$card_idx = ($card_index - 2) % 13; // 0..12
+	$card_idx = ($deck_card_index - 2) % 13; // 0..12
 
 	return isset($card_map[$card_idx]) 
 				? $card_map[$card_idx] 
 				: $card_idx + 2;
 }
-function get_card_color_by_index($card_index=24) { // '♠', '♥', '♦', '♣'
+function get_card_color_by_index($deck_card_index=24) { // '♠', '♥', '♦', '♣'
 	// $card_suit = ['spades', 'hearts', 'diamonds', 'clubs'];
 	$card_suit = ['♠', '♥', '♦', '♣'];
-	// $card_color_idx = floor($card_index / 13);
-	$card_color_idx = floor(($card_index-2) / 13);
+
+	$card_color_idx = floor(($deck_card_index-2) / 13);
 	return isset($card_suit[$card_color_idx]) 
 				? $card_suit[$card_color_idx]
 				: '';
 }
-function get_card($card_index=51) { // 7, 9, 10, 11, 12, 13, 14, 20, 21
+function get_card($deck_card_index=51) { // 7, 9, 10, 11, 12, 13, 14, 20, 21
 	$card = [
-		get_card_value_by_index($card_index), // 8
-		get_card_color_by_index($card_index) // '♠', '♥', '♦', '♣'
+		get_deck_card_value_by_index($deck_card_index), // 8
+		get_card_color_by_index($deck_card_index) // '♠', '♥', '♦', '♣'
 	];
 
 	return implode('', $card);
 }
 function is_belote_card($card=32) {
-	$card_index = get_card_index($card);
-	return (bool) ($card_index >= 5);
+	$deck_card_index = get_deck_card_index($card);
+	return (bool) ($deck_card_index >= 5);
 }
 function has_ordinals($cards_list, $how_many) {
 
 	sort($cards_list);
 	$ordinals = [];
 	$prev_card_index = 0;
-	foreach($cards_list as $card_index) {
-		if ($card_index == $prev_card_index + 1) {
+	foreach($cards_list as $deck_card_index) {
+		if ($deck_card_index == $prev_card_index + 1) {
 			$cnt++;
 			if ($cnt == $how_many) {
-				$ordinals[] = $card_index - $how_many + 1;
+				$ordinals[] = $deck_card_index - $how_many + 1;
 			}
 		} else {
 			$cnt = 1;
 		}
-		$prev_card_index = $card_index;
+		$prev_card_index = $deck_card_index;
 	}
 	if (count($ordinals)) {
 		sort($ordinals);
@@ -61,7 +61,7 @@ function has_ordinals($cards_list, $how_many) {
 	return false;
 }
 function has_slots($cards_list) { // ideqta e da proverqva za 4 ednakvi karti bez znachenie ot koq boq-> 8 8 8 8
-	$cards_count = array_count_values(array_map('get_card_index', $cards_list));
+	$cards_count = array_count_values(array_map('get_deck_card_index', $cards_list));
 	$slots = [];
 	foreach($cards_count as $card_index => $number) {
 		if ($number == 4) {
@@ -84,10 +84,10 @@ function has_belote($cards_list) {
 			continue;
 		}
 
-		$current_card_index = get_card_index($card_index);
-		$next_card_index = get_card_index($cards_list[$pos+1]);
+		$current_card_index = get_deck_card_index($card_index);
+		$next_card_index = get_deck_card_index($cards_list[$pos+1]);
 		if ($current_card_index==10 && $next_card_index==11) {
-			$belote[] = get_card_color_index($card_index); // has belote from specific color
+			$belote[] = get_deck_card_color_index($card_index); // has belote from specific color
 		}
 	}
 
@@ -156,10 +156,9 @@ function displayOutput($data) {
 	echo $data;
 }
 // Zadavane na teste
-// $all_cards = range(0,51);
-$all_cards = range(2,53);
+$deck = range(2,53);
 // Wzemane na karti za belot (7, 9, 10, 11, 12, 13, 14, 20, 21)
-$belote_cards = array_filter($all_cards, 'is_belote_card'); // works
+$belote_cards = array_filter($deck, 'is_belote_card'); // works
 // Razmesvane
 shuffle($belote_cards);
 shuffle($belote_cards);

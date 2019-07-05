@@ -6,3 +6,8 @@
 - добавение prepareOutput и displayOutput в belote.php
 - преместена проверка за анонси в prepareOutput belote.php
 - добавена втора версия за белот в belote_2.php - подобрена като функционалсност и логика
+
+дата: 05.07
+ Подобрено в belote_2.php: 
+- променено име на функция get_card_index на get_deck_card_index
+- преименуване от card_index на deck_card_index (2..53)
